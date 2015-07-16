@@ -1,23 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.4"?>
 <plugin>
-
-      <!-- Change me!  Remove this and the corresponding java class when you start adding real plugin content of your own. -->
-       <extension id="example.menu"
-               point="org.protege.editor.core.application.EditorKitMenuAction">
-        <name value="Example..."/>
-        <class value="template.TemplateMenu"/>
-        <toolTip value="A menu plugin to bootstrap the new plugin process"/>
-        <path value="org.protege.editor.owl.menu.tools/SlotZ-Z"/>
+    <extension id="DLQueryTab"
+               point="org.protege.editor.core.application.WorkspaceTab">
+        <label value="Lizard Tab"/>
+        <class value="org.protege.editor.owl.ui.OWLWorkspaceViewsTab"/>
         <editorKitId value="OWLEditorKit"/>
+        <index value="L"/>
+        <defaultViewConfigFileName value="viewconfig-lizardtab.xml"/>
+        <protegeDefaultTab value="true"/>
+    </extension>
+    
+   <extension id="OWLClassExpressionEditorViewComponent"
+     		   point="org.protege.editor.core.application.ViewComponent">
+        <label value="DL query"/>
+        <class value="org.coode.dlquery.OWLClassExpressionEditorViewComponent"/>
+        <headerColor value="@org.protege.classcolor"/>
+        <category value="@org.protege.querycategory"/>
     </extension>
 
-      <!-- Change me!  Remove this and the corresponding java class when you start adding real plugin content of your own. -->
-    <extension id="example.view"
-               point="org.protege.editor.core.application.ViewComponent">
-        <label value="Example"/>
-        <class value="template.TemplateView"/>
-       	<headerColor value="@org.protege.ontologycolor"/>
-        <category value="@org.protege.ontologycategory"/>
-    </extension>
+	<extension id="lizard.prefs"
+				point="org.protege.editor.core.application.preferencespanel">
+		<label value="Lizard Bases"/>
+		<class value="cin.ufpe.lizard.LizardPreferencesPane"/>
+	</extension>
 </plugin>
