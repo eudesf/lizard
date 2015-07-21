@@ -18,7 +18,7 @@
 
 	<properties>
 		<!-- <protege.version>5.0.0-beta-15</protege.version> -->
-		<protege.version>5.0.0-beta-18-SNAPSHOT</protege.version>
+		<protege.version>5.0.0-beta-17</protege.version>
 		<sesame.version>2.8.1</sesame.version>
 	</properties>
 
@@ -104,18 +104,25 @@
 				<configuration>
 					<instructions>
 						<Bundle-SymbolicName>${project.artifactId};singleton:=true</Bundle-SymbolicName>
-						<Include-Resource>plugin.xml, {maven-resources}</Include-Resource>
+						<Include-Resource>{maven-resources}</Include-Resource>
 
 						<Bundle-Vendor>Anonymous</Bundle-Vendor>
 						<Bundle-ClassPath>., {maven-dependencies}</Bundle-ClassPath>
 						<Embed-Dependency>*</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>
 						<Import-Package>
-							org.apache.log4j.*;version="[1.2,2)",
+							
+<!-- 							org.apache.log4j.*;version="[1.2,2)", -->
+<!-- 							org.protege.editor.core.*;version="5.0.0", -->
+<!-- 							org.protege.editor.owl.*;version="5.0.0", -->
+<!-- 							org.protege.editor.owl.ui;version="5.0.0", -->
+							org.protege.editor.core,
+							org.protege.editor.core.plugin,
+							org.protege.editor.core.ui.preferences,
+							org.protege.editor.owl,
+							org.protege.editor.owl.ui,
+
 							org.eclipse.core.runtime;registry=split,
-							org.protege.editor.core.*;version="5.0.0",
-							org.protege.editor.owl.*;version="5.0.0",
-							org.protege.editor.owl.ui;version="5.0.0",
 
 							!com.ibm.uvm.tools,
 							!com.mchange.v2.c3p0,
