@@ -6,6 +6,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -29,6 +30,8 @@ import org.protege.editor.core.prefs.Preferences;
 import org.protege.editor.core.prefs.PreferencesManager;
 import org.protege.editor.owl.ui.preferences.OWLPreferencesPanel;
 
+import br.ufpe.cin.aac3.gryphon.Gryphon;
+import br.ufpe.cin.aac3.gryphon.GryphonConfig;
 import cin.ufpe.lizard.config.DatabaseConfig;
 import cin.ufpe.lizard.config.OntologyURIConfig;
 import cin.ufpe.lizard.config.SourceConfig;
@@ -68,10 +71,10 @@ public class LizardPreferencesPane extends OWLPreferencesPanel {
 	}
 	
 	private void initGryphon() {
-//		GryphonConfig.setWorkingDirectory(new File("integrationExample"));
-//		GryphonConfig.setLogEnabled(true);
-//		GryphonConfig.setShowGryphonLogoOnConsole(true);
-//		Gryphon.init();
+		GryphonConfig.setWorkingDirectory(new File("integrationExample"));
+		GryphonConfig.setLogEnabled(true);
+		GryphonConfig.setShowGryphonLogoOnConsole(true);
+		Gryphon.init();
 	}
 	
 	@SuppressWarnings("unchecked")

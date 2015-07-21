@@ -9,9 +9,6 @@
 		<version>7</version>
 	</parent>
 
-	<!-- Change me! The next five properties should probably be customized for 
-		your project. If you don't know what to use for groupId, don't worry, you 
-		can deal with that when you are ready for maven. -->
 	<groupId>cin.ufpe.lizard</groupId>
 	<artifactId>lizard-plugin</artifactId>
 	<version>0.1.1-SNAPSHOT</version>
@@ -44,12 +41,11 @@
 			<version>${protege.version}</version>
 		</dependency>
 
-<!-- 		<dependency> -->
-<!-- 			<groupId>gryphon-framework</groupId> -->
-<!-- 			<artifactId>gryphon-framework</artifactId> -->
-<!-- 			<version>0.0.1-SNAPSHOT</version> -->
-<!-- 		</dependency> -->
-
+		<dependency>
+			<groupId>gryphon-framework</groupId>
+			<artifactId>gryphon-framework</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
 <!-- 
 		<dependency>
 			<groupId>net.sf.ehcache</groupId>
@@ -86,7 +82,7 @@
 			<artifactId>classmate</artifactId>
 			<version>1.2.0</version>
 		</dependency>
- -->
+		-->
 	</dependencies>
 
 	<build>
@@ -107,41 +103,39 @@
 				<extensions>true</extensions>
 				<configuration>
 					<instructions>
-						<Bundle-ClassPath>.</Bundle-ClassPath>
 						<Bundle-SymbolicName>${project.artifactId};singleton:=true</Bundle-SymbolicName>
+						<Include-Resource>plugin.xml, {maven-resources}</Include-Resource>
+
 						<Bundle-Vendor>Anonymous</Bundle-Vendor>
+						<Bundle-ClassPath>., {maven-dependencies}</Bundle-ClassPath>
+						<Embed-Dependency>*</Embed-Dependency>
+						<Embed-Transitive>true</Embed-Transitive>
 						<Import-Package>
 							org.apache.log4j.*;version="[1.2,2)",
 							org.eclipse.core.runtime;registry=split,
 							org.protege.editor.core.*;version="5.0.0",
 							org.protege.editor.owl.*;version="5.0.0",
 							org.protege.editor.owl.ui;version="5.0.0",
+
+							!com.ibm.uvm.tools,
+							!com.mchange.v2.c3p0,
+							!com.sun.java.swing.plaf.windows,
+							!com.sun.jdmk.comm,
+							!com.sun.org.apache.xml.internal.serialize,
+							!javax.jmdns,
+							!javax.jms,
+							!javax.mail.*,
+							!javax.servlet.*,
+							!net.sf.ehcache.*,
+							!net.spy.memcached,
+							!org.apache.lucene.search.grouping,
+							!org.apache.regexp,
+							!org.hibernate.service.jdbc.connections.spi,
+							!org.jboss.resource.adapter.jdbc.*,
+							!sun.*,
 							*
 						</Import-Package>
-						<Export-Package>{local-packages},
-						<!-- 
-							br.ufpe.cin.aac3.gryphon.*,
-							com.hp.hpl.jena.*,
-							org.apache.commons.*,
-							org.apache.http.*,
-							net.sf.ehcache.*,
-							javax.servlet.*,
-							net.spy.memcached.*,
-							com.codahale.metrics.*,
-							org.apache.jena.*,
-							com.fasterxml.jackson.*,
-							com.github.jsonldjava.*,
-							org.apache.thrift.*,
-							org.apache.xerces.*,
-							org.apache.xml.*,
-							org.hibernate.*,
-							antlr.*,
-							com.fasterxml.*,
-							javassist.*,
-							com.sun.jdi.*
-						-->
-						</Export-Package>
-						<Include-Resource>plugin.xml, {maven-resources}</Include-Resource>
+						<Export-Package>{local-packages}</Export-Package>
 					</instructions>
 					<executions>
 						<execution>
