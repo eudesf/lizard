@@ -1,4 +1,4 @@
-package org.coode.dlquery;
+package org.coode.dlquery.lizard;
 
 import java.awt.Frame;
 import java.awt.Point;
@@ -6,6 +6,7 @@ import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
+
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
@@ -32,7 +33,7 @@ import org.semanticweb.owlapi.model.OWLObject;
 import org.semanticweb.owlapi.reasoner.Node;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 
-import static org.coode.dlquery.ResultsSection.*;
+import static org.coode.dlquery.lizard.ResultsSection.*;
 
 /**
  * Author: Matthew Horridge<br>

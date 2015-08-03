@@ -1,4 +1,4 @@
-package org.coode.dlquery;
+package org.coode.dlquery.lizard;
 
 /**
  * Author: Matthew Horridge<br>

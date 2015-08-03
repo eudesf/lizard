@@ -1,4 +1,11 @@
-package org.coode.dlquery;
+package org.coode.dlquery.lizard;
+
+import static org.coode.dlquery.lizard.ResultsSection.DIRECT_SUB_CLASSES;
+import static org.coode.dlquery.lizard.ResultsSection.DIRECT_SUPER_CLASSES;
+import static org.coode.dlquery.lizard.ResultsSection.EQUIVALENT_CLASSES;
+import static org.coode.dlquery.lizard.ResultsSection.INSTANCES;
+import static org.coode.dlquery.lizard.ResultsSection.SUB_CLASSES;
+import static org.coode.dlquery.lizard.ResultsSection.SUPER_CLASSES;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -7,7 +14,7 @@ import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
-import java.util.ArrayList;
+import java.io.File;
 import java.util.List;
 
 import javax.swing.AbstractAction;
@@ -17,32 +24,32 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
+import javax.swing.SwingWorker;
 
 import org.apache.log4j.Logger;
 import org.protege.editor.core.ui.util.ComponentFactory;
 import org.protege.editor.core.ui.util.InputVerificationStatusChangedListener;
 import org.protege.editor.owl.model.cache.OWLExpressionUserCache;
-import org.protege.editor.owl.model.entity.OWLEntityCreationSet;
 import org.protege.editor.owl.model.event.EventType;
 import org.protege.editor.owl.model.event.OWLModelManagerChangeEvent;
 import org.protege.editor.owl.model.event.OWLModelManagerListener;
 import org.protege.editor.owl.model.inference.OWLReasonerManager;
 import org.protege.editor.owl.model.inference.ReasonerUtilities;
-import org.protege.editor.owl.ui.CreateDefinedClassPanel;
 import org.protege.editor.owl.ui.clsdescriptioneditor.ExpressionEditor;
 import org.protege.editor.owl.ui.clsdescriptioneditor.OWLExpressionChecker;
 import org.protege.editor.owl.ui.view.AbstractOWLViewComponent;
-import org.semanticweb.owlapi.model.AddAxiom;
-import org.semanticweb.owlapi.model.OWLAxiom;
-import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
-import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLException;
-import org.semanticweb.owlapi.model.OWLOntologyChange;
 
-import static org.coode.dlquery.ResultsSection.*;
+import br.ufpe.cin.aac3.gryphon.Gryphon;
+import br.ufpe.cin.aac3.gryphon.GryphonConfig;
+import cin.ufpe.lizard.LizardPreferencesPane;
+import cin.ufpe.lizard.config.DatabaseConfig;
+import cin.ufpe.lizard.config.OntologyURIConfig;
+import cin.ufpe.lizard.config.SourceConfig;
 
 /**
  * Author: Matthew Horridge<br>
@@ -56,7 +63,7 @@ import static org.coode.dlquery.ResultsSection.*;
 public class OWLClassExpressionEditorViewComponent extends AbstractOWLViewComponent {
     private static final long serialVersionUID = 8268241587271333587L;
 
-    Logger log = Logger.getLogger(OWLClassExpressionEditorViewComponent.class);
+    private Logger log = Logger.getLogger(OWLClassExpressionEditorViewComponent.class);
 
     private ExpressionEditor<OWLClassExpression> owlDescriptionEditor;
 
@@ -77,13 +84,17 @@ public class OWLClassExpressionEditorViewComponent extends AbstractOWLViewCompon
     private JButton executeButton;
 
     private JButton addButton;
+    
+    private JLabel statusLabel;
 
     private OWLModelManagerListener listener;
 
     private boolean requiresRefresh = false;
-
-
+    
     protected void initialiseOWLView() throws Exception {
+    	System.out.println("Iniciando **************");
+    	initGryphon();
+    	loadGryphonSources();
         setLayout(new BorderLayout(10, 10));
 
         JComponent editorPanel = createQueryPanel();
@@ -117,7 +128,31 @@ public class OWLClassExpressionEditorViewComponent extends AbstractOWLViewCompon
         });
     }
 
-
+	private void initGryphon() {
+		GryphonConfig.setWorkingDirectory(new File("integrationExample"));
+		GryphonConfig.setLogEnabled(true);
+		GryphonConfig.setShowGryphonLogoOnConsole(true);
+		Gryphon.init();
+	}
+	
+	private void loadGryphonSources() {
+		List<SourceConfig> sourceConfigList = LizardPreferencesPane.loadSourceConfigList();
+		for (SourceConfig sc : sourceConfigList) {
+			if (sc instanceof OntologyURIConfig) {
+				OntologyURIConfig config = (OntologyURIConfig) sc;
+				
+				if (config.isGlobal()) {
+					Gryphon.setGlobalOntology(config.getOntology());
+				} else {
+					Gryphon.addLocalOntology(config.getOntology());
+					
+				}
+			} else if (sc instanceof DatabaseConfig) {
+				Gryphon.addLocalDatabase(((DatabaseConfig) sc).getDatabase());
+			}
+		}
+	}
+	
     private JComponent createQueryPanel() {
         JPanel editorPanel = new JPanel(new BorderLayout());
 
@@ -134,9 +169,6 @@ public class OWLClassExpressionEditorViewComponent extends AbstractOWLViewCompon
         editorPanel.add(ComponentFactory.createScrollPane(owlDescriptionEditor), BorderLayout.CENTER);
         JPanel buttonHolder = new JPanel(new FlowLayout(FlowLayout.LEFT));
         executeButton = new JButton(new AbstractAction("Execute") {
-            /**
-             * 
-             */
             private static final long serialVersionUID = -1833321282125901561L;
 
             public void actionPerformed(ActionEvent e) {
@@ -144,22 +176,37 @@ public class OWLClassExpressionEditorViewComponent extends AbstractOWLViewCompon
             }
         });
 
-        addButton = new JButton(new AbstractAction("Add to ontology"){
-            /**
-             * 
-             */
-            private static final long serialVersionUID = -6050625862820344594L;
-
-            public void actionPerformed(ActionEvent event) {
-                doAdd();
-            }
-        });
+        executeButton.setEnabled(false);
+        statusLabel = new JLabel("Aligning Sources...");
         buttonHolder.add(executeButton);
         buttonHolder.add(addButton);
+        buttonHolder.add(statusLabel);
 
         editorPanel.add(buttonHolder, BorderLayout.SOUTH);
         editorPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(
                 Color.LIGHT_GRAY), "Query (class expression)"), BorderFactory.createEmptyBorder(3, 3, 3, 3)));
+        
+    	log.info("Loading Gryphon Sources...");
+    	loadGryphonSources();
+    	log.info("Aligning Sources");
+    	
+    	new SwingWorker<Void, Object>() {
+
+			@Override
+			protected Void doInBackground() throws Exception {
+				Gryphon.align(false);
+				return null;
+			}
+
+			@Override
+			protected void done() {
+				statusLabel.setText("Sources aligned.");
+				executeButton.setEnabled(true);
+				log.info("Sources aligned.");
+			}
+    		
+    	}.execute();
+    	
         return editorPanel;
     }
 
@@ -300,25 +347,5 @@ public class OWLClassExpressionEditorViewComponent extends AbstractOWLViewCompon
     }
 
 
-    private void doAdd() {
-        try {
-            OWLClassExpression desc = owlDescriptionEditor.createObject();
-            OWLEntityCreationSet<OWLClass> creationSet = CreateDefinedClassPanel.showDialog(desc, getOWLEditorKit());
-            if (creationSet != null) {
-            	List<OWLOntologyChange> changes = new ArrayList<OWLOntologyChange>(creationSet.getOntologyChanges());
-            	OWLDataFactory factory = getOWLModelManager().getOWLDataFactory();
-            	OWLAxiom equiv = factory.getOWLEquivalentClassesAxiom(creationSet.getOWLEntity(), desc);
-            	changes.add(new AddAxiom(getOWLModelManager().getActiveOntology(), equiv));
-                getOWLModelManager().applyChanges(changes);
-                if (isSynchronizing()){
-                    getOWLEditorKit().getOWLWorkspace().getOWLSelectionModel().setSelectedEntity(creationSet.getOWLEntity());    
-                }
-            }
-        }
-        catch (OWLException e) {
-            if (log.isDebugEnabled()){
-                log.debug("Exception caught trying to parse DL query", e);
-            }
-        }
-    }
+   
 }

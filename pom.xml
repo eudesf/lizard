@@ -13,12 +13,12 @@
 	<artifactId>lizard-plugin</artifactId>
 	<version>0.1.1-SNAPSHOT</version>
 
-
 	<packaging>bundle</packaging>
 
 	<properties>
-		<!-- <protege.version>5.0.0-beta-15</protege.version> -->
 		<protege.version>5.0.0-beta-17</protege.version>
+<!-- 		<protege.version>5.0.0-beta-15</protege.version> -->
+<!-- 		<protege.version>5.0.0-beta-17</protege.version> -->
 		<sesame.version>2.8.1</sesame.version>
 	</properties>
 
@@ -86,6 +86,7 @@
 	</dependencies>
 
 	<build>
+		<finalName>integrativoCBR-${version}</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -108,7 +109,7 @@
 
 						<Bundle-Vendor>Anonymous</Bundle-Vendor>
 						<Bundle-ClassPath>., {maven-dependencies}</Bundle-ClassPath>
-						<Embed-Dependency>*</Embed-Dependency>
+						<Embed-Dependency>*;groupId=!edu.stanford.protege|net.sourceforge.owlapi</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>
 						<Import-Package>
 							
@@ -116,11 +117,15 @@
 <!-- 							org.protege.editor.core.*;version="5.0.0", -->
 <!-- 							org.protege.editor.owl.*;version="5.0.0", -->
 <!-- 							org.protege.editor.owl.ui;version="5.0.0", -->
+
+							org.coode.dlquery.lizard,
 							org.protege.editor.core,
 							org.protege.editor.core.plugin,
 							org.protege.editor.core.ui.preferences,
+							org.protege.editor.core.ui.view,
 							org.protege.editor.owl,
 							org.protege.editor.owl.ui,
+							org.protege.common.log,
 
 							org.eclipse.core.runtime;registry=split,
 

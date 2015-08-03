@@ -6,7 +6,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -30,8 +29,7 @@ import org.protege.editor.core.prefs.Preferences;
 import org.protege.editor.core.prefs.PreferencesManager;
 import org.protege.editor.owl.ui.preferences.OWLPreferencesPanel;
 
-import br.ufpe.cin.aac3.gryphon.Gryphon;
-import br.ufpe.cin.aac3.gryphon.GryphonConfig;
+import br.ufpe.cin.aac3.gryphon.model.Database.DBMS;
 import cin.ufpe.lizard.config.DatabaseConfig;
 import cin.ufpe.lizard.config.OntologyURIConfig;
 import cin.ufpe.lizard.config.SourceConfig;
@@ -44,7 +42,7 @@ public class LizardPreferencesPane extends OWLPreferencesPanel {
     public static final String PREFERENCES_KEY = "LizardPrefs";
     
 	private JTabbedPane tabPane;
-	private List<SourceConfig> sourceConfigList = new ArrayList<>();
+	private List<SourceConfig> sourceConfigList;
 	private OntologyConfigTableModel tableModel;
 	private JTable table = new JTable();
 	
@@ -70,34 +68,30 @@ public class LizardPreferencesPane extends OWLPreferencesPanel {
 		});
 	}
 	
-	private void initGryphon() {
-		GryphonConfig.setWorkingDirectory(new File("integrationExample"));
-		GryphonConfig.setLogEnabled(true);
-		GryphonConfig.setShowGryphonLogoOnConsole(true);
-		Gryphon.init();
-	}
-	
 	@SuppressWarnings("unchecked")
-	private void loadPrefs() {
+	public static List<SourceConfig> loadSourceConfigList() {
 		try {
 			byte[] buf = getPreferences().getByteArray(PREFERENCES_KEY, null);
 			if (buf != null) {
 				ByteArrayInputStream byteIn = new ByteArrayInputStream(buf);
 				ObjectInputStream objectIn = new ObjectInputStream(byteIn);
 				
-				sourceConfigList = (List<SourceConfig>) objectIn.readObject();
+				return (List<SourceConfig>) objectIn.readObject();
 			}
-			tableModel = new OntologyConfigTableModel(sourceConfigList);
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
+		} catch (Exception e) {
+			System.err.println("Error trying to read preferences. Reseting.");
+			getPreferences().clear();
 		}
+		return new ArrayList<SourceConfig>();
+	}
+	
+	private void loadPrefs() {
+		sourceConfigList = loadSourceConfigList();
+		tableModel = new OntologyConfigTableModel(sourceConfigList);
 	}
 	
 	@Override
 	public void initialise() throws Exception {
-		initGryphon();
 		loadPrefs();
 		
 		setLayout(new BorderLayout());	
@@ -140,6 +134,7 @@ public class LizardPreferencesPane extends OWLPreferencesPanel {
 					config.setPassword(dialog.getPasswordField().getPassword());
 					config.setPort((int) dialog.getPortField().getValue());
 					config.setUserName(dialog.getUserNameField().getText());
+					config.setDbms(DBMS.values()[dialog.getDatabaseCombo().getSelectedIndex()]);
 					sourceConfigList.add(config);
 					tableModel.fireTableDataChanged();
 					table.updateUI();

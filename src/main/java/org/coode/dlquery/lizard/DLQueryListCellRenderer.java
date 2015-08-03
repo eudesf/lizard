@@ -1,8 +1,10 @@
-package org.coode.dlquery;
+package org.coode.dlquery.lizard;
 
-import org.protege.editor.core.ui.list.MListItem;
-import org.semanticweb.owlapi.model.OWLAxiom;
-import org.semanticweb.owlapi.model.OWLObject;
+import org.protege.editor.owl.OWLEditorKit;
+import org.protege.editor.owl.ui.renderer.OWLCellRenderer;
+
+import javax.swing.*;
+import java.awt.*;
 /*
  * Copyright (C) 2007, University of Manchester
  *
@@ -33,52 +35,21 @@ import org.semanticweb.owlapi.model.OWLObject;
  * Bio-Health Informatics Group<br>
  * Date: 27-Feb-2007<br><br>
  */
-public class DLQueryResultsSectionItem implements MListItem {
+public class DLQueryListCellRenderer extends OWLCellRenderer {
 
-    private OWLObject object;
-    private OWLAxiom  axiom;
-
-
-    public DLQueryResultsSectionItem(OWLObject object, OWLAxiom axiom) {
-        this.object = object;
-        this.axiom  = axiom;
+    public DLQueryListCellRenderer(OWLEditorKit owlEditorKit) {
+        super(owlEditorKit);
     }
 
 
-    public OWLObject getOWLObject() {
-        return object;
-    }
-    
-    public OWLAxiom getAxiom() {
-		return axiom;
-	}
-
-
-    public String toString() {
-        return object.toString();
-    }
-
-
-    public boolean isEditable() {
-        return false;
-    }
-
-
-    public void handleEdit() {
-    }
-
-
-    public boolean isDeleteable() {
-        return false;
-    }
-
-
-    public boolean handleDelete() {
-        return false;
-    }
-
-
-    public String getTooltip() {
-        return null;
+    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
+                                                  boolean cellHasFocus) {
+        Object renderableValue = value;
+        if (value instanceof DLQueryResultsSectionItem) {
+            DLQueryResultsSectionItem item = (DLQueryResultsSectionItem) value;
+            renderableValue = item.getOWLObject();
+        }
+        setPreferredWidth(list.getWidth());
+        return super.getListCellRendererComponent(list, renderableValue, index, isSelected, cellHasFocus);
     }
 }

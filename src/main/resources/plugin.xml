@@ -11,13 +11,23 @@
         <protegeDefaultTab value="true"/>
     </extension>
     
-   <extension id="OWLClassExpressionEditorViewComponent"
+   <extension id="org.coode.dlquery.lizard.OWLClassExpressionEditorViewComponent"
      		   point="org.protege.editor.core.application.ViewComponent">
         <label value="DL query"/>
-        <class value="org.coode.dlquery.OWLClassExpressionEditorViewComponent"/>
+        <class value="org.coode.dlquery.lizard.OWLClassExpressionEditorViewComponent"/>
         <headerColor value="@org.protege.classcolor"/>
         <category value="@org.protege.querycategory"/>
     </extension>
+
+<!--
+   <extension id="TestView"
+     		   point="org.protege.editor.core.application.ViewComponent">
+        <label value="Test View"/>
+        <class value="cin.ufpe.lizard.TestView"/>
+        <headerColor value="@org.protege.classcolor"/>
+        <category value="@org.protege.querycategory"/>
+    </extension>
+-->
 
 	<extension id="lizard.prefs"
 				point="org.protege.editor.core.application.preferencespanel">

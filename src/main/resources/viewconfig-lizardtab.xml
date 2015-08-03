@@ -9,11 +9,11 @@
         </CNode>
 
  		<CNode>
-            <Component label="DL Query">
-                <Property id="pluginId" value="org.coode.dlquery.OWLClassExpressionEditorViewComponent"/>
+            <Component label="Lizard DL Query">
+                <Property id="pluginId" value="org.coode.dlquery.lizard.OWLClassExpressionEditorViewComponent"/>
             </Component>
         </CNode>
-        
+
     </VSNode>
 
 </layout>

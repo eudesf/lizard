@@ -1,10 +1,6 @@
-package org.coode.dlquery;
+package org.coode.dlquery.lizard;
 
-import org.protege.editor.owl.OWLEditorKit;
-import org.protege.editor.owl.ui.renderer.OWLCellRenderer;
-
-import javax.swing.*;
-import java.awt.*;
+import org.protege.editor.core.ui.list.MListSectionHeader;
 /*
  * Copyright (C) 2007, University of Manchester
  *
@@ -35,21 +31,22 @@ import java.awt.*;
  * Bio-Health Informatics Group<br>
  * Date: 27-Feb-2007<br><br>
  */
-public class DLQueryListCellRenderer extends OWLCellRenderer {
+public class DLQueryResultsSection implements MListSectionHeader {
 
-    public DLQueryListCellRenderer(OWLEditorKit owlEditorKit) {
-        super(owlEditorKit);
+    private String label;
+
+
+    public DLQueryResultsSection(String label) {
+        this.label = label;
     }
 
 
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
-                                                  boolean cellHasFocus) {
-        Object renderableValue = value;
-        if (value instanceof DLQueryResultsSectionItem) {
-            DLQueryResultsSectionItem item = (DLQueryResultsSectionItem) value;
-            renderableValue = item.getOWLObject();
-        }
-        setPreferredWidth(list.getWidth());
-        return super.getListCellRendererComponent(list, renderableValue, index, isSelected, cellHasFocus);
+    public String getName() {
+        return label;
+    }
+
+
+    public boolean canAdd() {
+        return false;
     }
 }

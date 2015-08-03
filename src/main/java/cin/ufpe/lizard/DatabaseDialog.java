@@ -15,6 +15,8 @@ import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 
+import br.ufpe.cin.aac3.gryphon.model.Database.DBMS;
+
 public class DatabaseDialog extends LizardDialog {
 
 	private static final long serialVersionUID = 1L;
@@ -57,8 +59,10 @@ public class DatabaseDialog extends LizardDialog {
 		buttonBox.add(okButton);
 		buttonBox.add(cancelButton);
 		
-		databaseCombo.addItem("MySQL");
-		databaseCombo.addItem("PostgreSQL");
+		for (DBMS dbms : DBMS.values()) {
+			databaseCombo.addItem(dbms.name());
+		}
+		databaseCombo.setSelectedIndex(0);
 		
 		Box formBox = new Box(BoxLayout.Y_AXIS);
 		formBox.setBorder(buttonBox.getBorder());
