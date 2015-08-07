@@ -83,8 +83,6 @@ public class OWLClassExpressionEditorViewComponent extends AbstractOWLViewCompon
 
     private JButton executeButton;
 
-    private JButton addButton;
-    
     private JLabel statusLabel;
 
     private OWLModelManagerListener listener;
@@ -131,7 +129,7 @@ public class OWLClassExpressionEditorViewComponent extends AbstractOWLViewCompon
 	private void initGryphon() {
 		GryphonConfig.setWorkingDirectory(new File("integrationExample"));
 		GryphonConfig.setLogEnabled(true);
-		GryphonConfig.setShowGryphonLogoOnConsole(true);
+		GryphonConfig.setShowLogo(true);
 		Gryphon.init();
 	}
 	
@@ -161,7 +159,6 @@ public class OWLClassExpressionEditorViewComponent extends AbstractOWLViewCompon
         owlDescriptionEditor.addStatusChangedListener(new InputVerificationStatusChangedListener(){
             public void verifiedStatusChanged(boolean newState) {
                 executeButton.setEnabled(newState);
-                addButton.setEnabled(newState);
             }
         });
         owlDescriptionEditor.setPreferredSize(new Dimension(100, 50));
@@ -179,7 +176,6 @@ public class OWLClassExpressionEditorViewComponent extends AbstractOWLViewCompon
         executeButton.setEnabled(false);
         statusLabel = new JLabel("Aligning Sources...");
         buttonHolder.add(executeButton);
-        buttonHolder.add(addButton);
         buttonHolder.add(statusLabel);
 
         editorPanel.add(buttonHolder, BorderLayout.SOUTH);
@@ -194,7 +190,7 @@ public class OWLClassExpressionEditorViewComponent extends AbstractOWLViewCompon
 
 			@Override
 			protected Void doInBackground() throws Exception {
-				Gryphon.align(false);
+				Gryphon.alignAndMap();
 				return null;
 			}
 
