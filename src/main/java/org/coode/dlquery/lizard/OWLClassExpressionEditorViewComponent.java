@@ -15,6 +15,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.AbstractAction;
@@ -24,28 +25,33 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
-import javax.swing.SwingWorker;
+import javax.swing.JTextArea;
 
+import org.aksw.owl2sparql.OWLAxiomToSPARQLConverter;
 import org.apache.log4j.Logger;
+import org.coode.owlapi.manchesterowlsyntax.ManchesterOWLSyntaxEditorParser;
 import org.protege.editor.core.ui.util.ComponentFactory;
 import org.protege.editor.core.ui.util.InputVerificationStatusChangedListener;
+import org.protege.editor.owl.model.OWLModelManager;
 import org.protege.editor.owl.model.cache.OWLExpressionUserCache;
 import org.protege.editor.owl.model.event.EventType;
 import org.protege.editor.owl.model.event.OWLModelManagerChangeEvent;
 import org.protege.editor.owl.model.event.OWLModelManagerListener;
 import org.protege.editor.owl.model.inference.OWLReasonerManager;
 import org.protege.editor.owl.model.inference.ReasonerUtilities;
+import org.protege.editor.owl.model.parser.ProtegeOWLEntityChecker;
 import org.protege.editor.owl.ui.clsdescriptioneditor.ExpressionEditor;
 import org.protege.editor.owl.ui.clsdescriptioneditor.OWLExpressionChecker;
 import org.protege.editor.owl.ui.view.AbstractOWLViewComponent;
+import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLException;
 
 import br.ufpe.cin.aac3.gryphon.Gryphon;
 import br.ufpe.cin.aac3.gryphon.GryphonConfig;
+import br.ufpe.cin.aac3.gryphon.model.Ontology;
 import cin.ufpe.lizard.LizardPreferencesPane;
 import cin.ufpe.lizard.config.DatabaseConfig;
 import cin.ufpe.lizard.config.OntologyURIConfig;
@@ -83,29 +89,32 @@ public class OWLClassExpressionEditorViewComponent extends AbstractOWLViewCompon
 
     private JButton executeButton;
 
-    private JLabel statusLabel;
+//    private JLabel statusLabel;
+    
+    private JTextArea resultTextArea;
 
     private OWLModelManagerListener listener;
 
     private boolean requiresRefresh = false;
     
+    private List<Ontology> ontologies;
+    
     protected void initialiseOWLView() throws Exception {
-    	System.out.println("Iniciando **************");
     	initGryphon();
     	loadGryphonSources();
         setLayout(new BorderLayout(10, 10));
 
         JComponent editorPanel = createQueryPanel();
-        JComponent resultsPanel = createResultsPanel();
-        JComponent optionsBox = createOptionsBox();
-        resultsPanel.add(optionsBox, BorderLayout.EAST);
+        JComponent resultsPanel = createTextResultsPanel();
+        // JComponent optionsBox = createOptionsBox();
+        // resultsPanel.add(optionsBox, BorderLayout.EAST);
 
         JSplitPane splitter = new JSplitPane(JSplitPane.VERTICAL_SPLIT, editorPanel, resultsPanel);
         splitter.setDividerLocation(0.3);
 
         add(splitter, BorderLayout.CENTER);
 
-        updateGUI();
+//        updateGUI();
 
         listener = new OWLModelManagerListener() {
             public void handleChange(OWLModelManagerChangeEvent event) {
@@ -134,6 +143,7 @@ public class OWLClassExpressionEditorViewComponent extends AbstractOWLViewCompon
 	}
 	
 	private void loadGryphonSources() {
+		ontologies = new ArrayList<>();
 		List<SourceConfig> sourceConfigList = LizardPreferencesPane.loadSourceConfigList();
 		for (SourceConfig sc : sourceConfigList) {
 			if (sc instanceof OntologyURIConfig) {
@@ -143,15 +153,22 @@ public class OWLClassExpressionEditorViewComponent extends AbstractOWLViewCompon
 					Gryphon.setGlobalOntology(config.getOntology());
 				} else {
 					Gryphon.addLocalOntology(config.getOntology());
-					
 				}
+				ontologies.add(config.getOntology());
 			} else if (sc instanceof DatabaseConfig) {
 				Gryphon.addLocalDatabase(((DatabaseConfig) sc).getDatabase());
 			}
 		}
 	}
 	
-    private JComponent createQueryPanel() {
+	private JComponent createTextResultsPanel() {
+		JPanel editorPanel = new JPanel(new BorderLayout());
+		resultTextArea = new JTextArea();
+		editorPanel.add(resultTextArea);
+		return editorPanel;
+	}
+
+	private JComponent createQueryPanel() {
         JPanel editorPanel = new JPanel(new BorderLayout());
 
         final OWLExpressionChecker<OWLClassExpression> checker = getOWLModelManager().getOWLExpressionCheckerFactory().getOWLClassExpressionChecker();
@@ -169,14 +186,13 @@ public class OWLClassExpressionEditorViewComponent extends AbstractOWLViewCompon
             private static final long serialVersionUID = -1833321282125901561L;
 
             public void actionPerformed(ActionEvent e) {
-                doQuery();
+            	doQueryWithTextResults();
             }
         });
 
         executeButton.setEnabled(false);
-        statusLabel = new JLabel("Aligning Sources...");
         buttonHolder.add(executeButton);
-        buttonHolder.add(statusLabel);
+//        buttonHolder.add(statusLabel);
 
         editorPanel.add(buttonHolder, BorderLayout.SOUTH);
         editorPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(
@@ -184,24 +200,28 @@ public class OWLClassExpressionEditorViewComponent extends AbstractOWLViewCompon
         
     	log.info("Loading Gryphon Sources...");
     	loadGryphonSources();
-    	log.info("Aligning Sources");
-    	
-    	new SwingWorker<Void, Object>() {
 
-			@Override
-			protected Void doInBackground() throws Exception {
-				Gryphon.alignAndMap();
-				return null;
-			}
 
-			@Override
-			protected void done() {
-				statusLabel.setText("Sources aligned.");
-				executeButton.setEnabled(true);
-				log.info("Sources aligned.");
-			}
-    		
-    	}.execute();
+//		TODO disabled source alignment...
+    	//
+//    	log.info("Aligning Sources");
+//    	statusLabel = new JLabel("Aligning Sources...");
+//    	new SwingWorker<Void, Object>() {
+//
+//			@Override
+//			protected Void doInBackground() throws Exception {
+//				Gryphon.alignAndMap();
+//				return null;
+//			}
+//
+//			@Override
+//			protected void done() {
+//				statusLabel.setText("Sources aligned.");
+//				executeButton.setEnabled(true);
+//				log.info("Sources aligned.");
+//			}
+//    		
+//    	}.execute();
     	
         return editorPanel;
     }
@@ -318,6 +338,33 @@ public class OWLClassExpressionEditorViewComponent extends AbstractOWLViewCompon
     }
 
 
+    private void doQueryWithTextResults() {
+    	
+    	
+    	OWLAxiomToSPARQLConverter converter = new OWLAxiomToSPARQLConverter("?s","?o");
+    	
+    	OWLModelManager manager = getOWLWorkspace().getOWLEditorKit().getOWLModelManager();
+		ManchesterOWLSyntaxEditorParser parser = new ManchesterOWLSyntaxEditorParser(
+    			manager.getOWLDataFactory(), 
+				owlDescriptionEditor.getText());
+    	
+//    	OWLEntityChecker defaultInstance = new ShortFormEntityChecker( 
+//				new BidirectionalShortFormProviderAdapter(
+//						manager, ontologies, new Simple	ShortFormProvider()));
+//
+//		OWLEntityChecker entityChecker = new AdvancedEntityChecker(defaultInstance, ontologies, manager);
+//		
+		ProtegeOWLEntityChecker entityChecker = new ProtegeOWLEntityChecker(manager.getOWLEntityFinder());
+		
+		
+		parser.setOWLEntityChecker(entityChecker);
+		
+		OWLAxiom axiom = parser.parseAxiom();
+		
+		resultTextArea.setText(converter.asQuery(axiom).toString());
+    	
+    }
+    
     private void doQuery() {
         if (isShowing()){
             try {

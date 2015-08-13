@@ -13,7 +13,7 @@
     
    <extension id="org.coode.dlquery.lizard.OWLClassExpressionEditorViewComponent"
      		   point="org.protege.editor.core.application.ViewComponent">
-        <label value="DL query"/>
+        <label value="Integrativo CBR"/>
         <class value="org.coode.dlquery.lizard.OWLClassExpressionEditorViewComponent"/>
         <headerColor value="@org.protege.classcolor"/>
         <category value="@org.protege.querycategory"/>
