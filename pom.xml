@@ -11,7 +11,7 @@
 
 	<groupId>cin.ufpe.lizard</groupId>
 	<artifactId>lizard-plugin</artifactId>
-	<version>0.1.1-SNAPSHOT</version>
+	<version>0.0.1-SNAPSHOT</version>
 
 	<packaging>bundle</packaging>
 

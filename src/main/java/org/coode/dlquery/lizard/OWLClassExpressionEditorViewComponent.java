@@ -29,23 +29,19 @@ import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
 
-import org.aksw.owl2sparql.OWLAxiomToSPARQLConverter;
+import org.aksw.owl2sparql.OWLClassExpressionToSPARQLConverter;
 import org.apache.log4j.Logger;
-import org.coode.owlapi.manchesterowlsyntax.ManchesterOWLSyntaxEditorParser;
 import org.protege.editor.core.ui.util.ComponentFactory;
 import org.protege.editor.core.ui.util.InputVerificationStatusChangedListener;
-import org.protege.editor.owl.model.OWLModelManager;
 import org.protege.editor.owl.model.cache.OWLExpressionUserCache;
 import org.protege.editor.owl.model.event.EventType;
 import org.protege.editor.owl.model.event.OWLModelManagerChangeEvent;
 import org.protege.editor.owl.model.event.OWLModelManagerListener;
 import org.protege.editor.owl.model.inference.OWLReasonerManager;
 import org.protege.editor.owl.model.inference.ReasonerUtilities;
-import org.protege.editor.owl.model.parser.ProtegeOWLEntityChecker;
 import org.protege.editor.owl.ui.clsdescriptioneditor.ExpressionEditor;
 import org.protege.editor.owl.ui.clsdescriptioneditor.OWLExpressionChecker;
 import org.protege.editor.owl.ui.view.AbstractOWLViewComponent;
-import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLException;
 
@@ -56,6 +52,8 @@ import cin.ufpe.lizard.LizardPreferencesPane;
 import cin.ufpe.lizard.config.DatabaseConfig;
 import cin.ufpe.lizard.config.OntologyURIConfig;
 import cin.ufpe.lizard.config.SourceConfig;
+
+import com.hp.hpl.jena.query.Query;
 
 /**
  * Author: Matthew Horridge<br>
@@ -340,29 +338,14 @@ public class OWLClassExpressionEditorViewComponent extends AbstractOWLViewCompon
 
     private void doQueryWithTextResults() {
     	
+    	OWLClassExpressionToSPARQLConverter converter = new OWLClassExpressionToSPARQLConverter();
     	
-    	OWLAxiomToSPARQLConverter converter = new OWLAxiomToSPARQLConverter("?s","?o");
-    	
-    	OWLModelManager manager = getOWLWorkspace().getOWLEditorKit().getOWLModelManager();
-		ManchesterOWLSyntaxEditorParser parser = new ManchesterOWLSyntaxEditorParser(
-    			manager.getOWLDataFactory(), 
-				owlDescriptionEditor.getText());
-    	
-//    	OWLEntityChecker defaultInstance = new ShortFormEntityChecker( 
-//				new BidirectionalShortFormProviderAdapter(
-//						manager, ontologies, new Simple	ShortFormProvider()));
-//
-//		OWLEntityChecker entityChecker = new AdvancedEntityChecker(defaultInstance, ontologies, manager);
-//		
-		ProtegeOWLEntityChecker entityChecker = new ProtegeOWLEntityChecker(manager.getOWLEntityFinder());
-		
-		
-		parser.setOWLEntityChecker(entityChecker);
-		
-		OWLAxiom axiom = parser.parseAxiom();
-		
-		resultTextArea.setText(converter.asQuery(axiom).toString());
-    	
+		try {
+			Query query = converter.asQuery("?x", owlDescriptionEditor.createObject());
+			resultTextArea.setText(query.toString());
+		} catch (OWLException e) {
+			e.printStackTrace();
+		}
     }
     
     private void doQuery() {
