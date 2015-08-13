@@ -14,7 +14,10 @@ import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,6 +49,7 @@ import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLException;
 
 import br.ufpe.cin.aac3.gryphon.Gryphon;
+import br.ufpe.cin.aac3.gryphon.Gryphon.ResultFormat;
 import br.ufpe.cin.aac3.gryphon.GryphonConfig;
 import br.ufpe.cin.aac3.gryphon.model.Ontology;
 import cin.ufpe.lizard.LizardPreferencesPane;
@@ -85,7 +89,9 @@ public class OWLClassExpressionEditorViewComponent extends AbstractOWLViewCompon
 
     private JCheckBox showIndividualsCheckBox;
 
-    private JButton executeButton;
+    private JButton queryGryphonButton;
+    
+    private JButton convertToSparqlButton;
 
 //    private JLabel statusLabel;
     
@@ -133,6 +139,25 @@ public class OWLClassExpressionEditorViewComponent extends AbstractOWLViewCompon
         });
     }
 
+    private String readFile(File file) {
+    	StringBuilder result = new StringBuilder();
+    	try {
+    		BufferedReader reader = new BufferedReader(new FileReader(file));
+	    	try {
+		    	String line;
+		    	while ((line = reader.readLine()) != null) {
+		    		result.append(line);
+		    		result.append(System.lineSeparator());
+		    	}
+	    	} finally {
+				reader.close();
+	    	}
+    	} catch (IOException e) {
+    		throw new RuntimeException(e);
+    	}
+	    return result.toString();
+    }
+    
 	private void initGryphon() {
 		GryphonConfig.setWorkingDirectory(new File("integrationExample"));
 		GryphonConfig.setLogEnabled(true);
@@ -141,6 +166,7 @@ public class OWLClassExpressionEditorViewComponent extends AbstractOWLViewCompon
 	}
 	
 	private void loadGryphonSources() {
+		log.info("Loading Gryphon Sources...");
 		ontologies = new ArrayList<>();
 		List<SourceConfig> sourceConfigList = LizardPreferencesPane.loadSourceConfigList();
 		for (SourceConfig sc : sourceConfigList) {
@@ -173,33 +199,47 @@ public class OWLClassExpressionEditorViewComponent extends AbstractOWLViewCompon
         owlDescriptionEditor = new ExpressionEditor<OWLClassExpression>(getOWLEditorKit(), checker);
         owlDescriptionEditor.addStatusChangedListener(new InputVerificationStatusChangedListener(){
             public void verifiedStatusChanged(boolean newState) {
-                executeButton.setEnabled(newState);
+                queryGryphonButton.setEnabled(newState);
             }
         });
         owlDescriptionEditor.setPreferredSize(new Dimension(100, 50));
 
         editorPanel.add(ComponentFactory.createScrollPane(owlDescriptionEditor), BorderLayout.CENTER);
         JPanel buttonHolder = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        executeButton = new JButton(new AbstractAction("Execute") {
+        queryGryphonButton = new JButton(new AbstractAction("Query Gryphon") {
             private static final long serialVersionUID = -1833321282125901561L;
 
             public void actionPerformed(ActionEvent e) {
-            	doQueryWithTextResults();
+            	String sparqlQuery = convertToSparql().toString();
+        		log.info(sparqlQuery);
+        		Gryphon.query(sparqlQuery, ResultFormat.JSON);
+        		
+        		File resultFolder = Gryphon.getResultFolder();
+        		if (resultFolder.exists()) {
+        			if (resultFolder.listFiles().length > 0) {
+        				resultTextArea.setText(readFile(resultFolder.listFiles()[0]));
+        			}
+        		}
             }
         });
+        convertToSparqlButton = new JButton(new AbstractAction("Convert to SPARQL") {
+            private static final long serialVersionUID = -1833321282125901561L;
 
-        executeButton.setEnabled(false);
-        buttonHolder.add(executeButton);
+            public void actionPerformed(ActionEvent e) {
+            	resultTextArea.setText(convertToSparql().toString());
+            }
+
+        });
+
+        queryGryphonButton.setEnabled(false);
+        buttonHolder.add(queryGryphonButton);
+        buttonHolder.add(convertToSparqlButton);
 //        buttonHolder.add(statusLabel);
 
         editorPanel.add(buttonHolder, BorderLayout.SOUTH);
         editorPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(
                 Color.LIGHT_GRAY), "Query (class expression)"), BorderFactory.createEmptyBorder(3, 3, 3, 3)));
         
-    	log.info("Loading Gryphon Sources...");
-    	loadGryphonSources();
-
-
 //		TODO disabled source alignment...
     	//
 //    	log.info("Aligning Sources");
@@ -335,19 +375,16 @@ public class OWLClassExpressionEditorViewComponent extends AbstractOWLViewCompon
         showIndividualsCheckBox.setSelected(resultsList.isResultsSectionVisible(INSTANCES));
     }
 
-
-    private void doQueryWithTextResults() {
-    	
-    	OWLClassExpressionToSPARQLConverter converter = new OWLClassExpressionToSPARQLConverter();
-    	
-		try {
-			Query query = converter.asQuery("?x", owlDescriptionEditor.createObject());
-			resultTextArea.setText(query.toString());
+    private Query convertToSparql() {
+    	try {
+    		OWLClassExpressionToSPARQLConverter converter = new OWLClassExpressionToSPARQLConverter();
+			return converter.asQuery("?x", owlDescriptionEditor.createObject());
 		} catch (OWLException e) {
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
     }
     
+
     private void doQuery() {
         if (isShowing()){
             try {
