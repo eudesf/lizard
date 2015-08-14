@@ -210,17 +210,7 @@ public class OWLClassExpressionEditorViewComponent extends AbstractOWLViewCompon
             private static final long serialVersionUID = -1833321282125901561L;
 
             public void actionPerformed(ActionEvent e) {
-            	loadGryphonSources();
-            	String sparqlQuery = convertToSparql().toString();
-        		log.info(sparqlQuery);
-        		Gryphon.query(sparqlQuery, ResultFormat.JSON);
-        		
-        		File resultFolder = Gryphon.getResultFolder();
-        		if (resultFolder.exists()) {
-        			if (resultFolder.listFiles().length > 0) {
-        				resultTextArea.setText(readFile(resultFolder.listFiles()[0]));
-        			}
-        		}
+            	doQuery();
             }
         });
         convertToSparqlButton = new JButton(new AbstractAction("Convert to SPARQL") {
@@ -367,16 +357,6 @@ public class OWLClassExpressionEditorViewComponent extends AbstractOWLViewCompon
         getOWLModelManager().removeListener(listener);
     }
 
-
-    private void updateGUI() {
-        showDirectSuperClassesCheckBox.setSelected(resultsList.isResultsSectionVisible(DIRECT_SUPER_CLASSES));
-        showSuperClassesCheckBox.setSelected(resultsList.isResultsSectionVisible(SUPER_CLASSES));
-        showEquivalentClassesCheckBox.setSelected(resultsList.isResultsSectionVisible(EQUIVALENT_CLASSES));
-        showDirectSubClassesCheckBox.setSelected(resultsList.isResultsSectionVisible(DIRECT_SUB_CLASSES));
-        showSubClassesCheckBox.setSelected(resultsList.isResultsSectionVisible(SUB_CLASSES));
-        showIndividualsCheckBox.setSelected(resultsList.isResultsSectionVisible(INSTANCES));
-    }
-
     private Query convertToSparql() {
     	try {
     		OWLClassExpressionToSPARQLConverter converter = new OWLClassExpressionToSPARQLConverter();
@@ -386,24 +366,19 @@ public class OWLClassExpressionEditorViewComponent extends AbstractOWLViewCompon
 		}
     }
     
-
     private void doQuery() {
         if (isShowing()){
-            try {
-            	OWLReasonerManager reasonerManager = getOWLModelManager().getOWLReasonerManager();
-            	ReasonerUtilities.warnUserIfReasonerIsNotConfigured(this, reasonerManager);
-
-                OWLClassExpression desc = owlDescriptionEditor.createObject();
-                if (desc != null){
-                    OWLExpressionUserCache.getInstance(getOWLModelManager()).add(desc, owlDescriptionEditor.getText());
-                    resultsList.setOWLClassExpression(desc);
-                }
-            }
-            catch (OWLException e) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Exception caught trying to do the query", e);
-                }
-            }
+        	loadGryphonSources();
+        	String sparqlQuery = convertToSparql().toString();
+    		log.info("**** QUERY ****\n" + sparqlQuery + "\n****");
+    		Gryphon.query(sparqlQuery, ResultFormat.JSON);
+    		
+    		File resultFolder = Gryphon.getResultFolder();
+    		if (resultFolder.exists()) {
+    			if (resultFolder.listFiles().length > 0) {
+    				resultTextArea.setText(readFile(resultFolder.listFiles()[0]));
+    			}
+    		}
             requiresRefresh = false;
         }
         else{
