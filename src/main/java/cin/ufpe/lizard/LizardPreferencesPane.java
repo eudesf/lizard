@@ -130,7 +130,7 @@ public class LizardPreferencesPane extends OWLPreferencesPanel {
 				if (dialog.isOk()) {
 					DatabaseConfig config = new DatabaseConfig();
 					config.setHost(dialog.getHostField().getText());
-					config.setDatabaseName(String.valueOf(dialog.getDatabaseCombo().getSelectedItem()));
+					config.setDatabaseName(dialog.getNameField().getText());
 					config.setPassword(dialog.getPasswordField().getPassword());
 					config.setPort((int) dialog.getPortField().getValue());
 					config.setUserName(dialog.getUserNameField().getText());

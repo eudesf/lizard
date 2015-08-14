@@ -31,7 +31,7 @@
 
 	<extension id="lizard.prefs"
 				point="org.protege.editor.core.application.preferencespanel">
-		<label value="Lizard Bases"/>
+		<label value="Bases do IntegrativoCBR"/>
 		<class value="cin.ufpe.lizard.LizardPreferencesPane"/>
 	</extension>
 </plugin>

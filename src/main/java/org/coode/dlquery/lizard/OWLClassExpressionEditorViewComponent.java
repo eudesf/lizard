@@ -157,7 +157,7 @@ public class OWLClassExpressionEditorViewComponent extends AbstractOWLViewCompon
     }
     
 	private void initGryphon() {
-		GryphonConfig.setWorkingDirectory(new File("integrationExample"));
+		GryphonConfig.setWorkingDirectory(new File("integrationMScExperiment"));
 		GryphonConfig.setLogEnabled(true);
 		GryphonConfig.setShowLogo(true);
 		Gryphon.init();
