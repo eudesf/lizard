@@ -3,7 +3,7 @@
 <plugin>
     <extension id="DLQueryTab"
                point="org.protege.editor.core.application.WorkspaceTab">
-        <label value="Lizard Tab"/>
+        <label value="IntegrativoCBR"/>
         <class value="org.protege.editor.owl.ui.OWLWorkspaceViewsTab"/>
         <editorKitId value="OWLEditorKit"/>
         <index value="L"/>

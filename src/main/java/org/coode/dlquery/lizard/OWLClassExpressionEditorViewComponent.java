@@ -104,8 +104,6 @@ public class OWLClassExpressionEditorViewComponent extends AbstractOWLViewCompon
     private List<Ontology> ontologies;
     
     protected void initialiseOWLView() throws Exception {
-    	initGryphon();
-    	loadGryphonSources();
         setLayout(new BorderLayout(10, 10));
 
         JComponent editorPanel = createQueryPanel();
@@ -166,6 +164,7 @@ public class OWLClassExpressionEditorViewComponent extends AbstractOWLViewCompon
 	}
 	
 	private void loadGryphonSources() {
+		initGryphon();
 		log.info("Loading Gryphon Sources...");
 		ontologies = new ArrayList<>();
 		List<SourceConfig> sourceConfigList = LizardPreferencesPane.loadSourceConfigList();
@@ -200,6 +199,7 @@ public class OWLClassExpressionEditorViewComponent extends AbstractOWLViewCompon
         owlDescriptionEditor.addStatusChangedListener(new InputVerificationStatusChangedListener(){
             public void verifiedStatusChanged(boolean newState) {
                 queryGryphonButton.setEnabled(newState);
+                convertToSparqlButton.setEnabled(newState);
             }
         });
         owlDescriptionEditor.setPreferredSize(new Dimension(100, 50));
@@ -210,6 +210,7 @@ public class OWLClassExpressionEditorViewComponent extends AbstractOWLViewCompon
             private static final long serialVersionUID = -1833321282125901561L;
 
             public void actionPerformed(ActionEvent e) {
+            	loadGryphonSources();
             	String sparqlQuery = convertToSparql().toString();
         		log.info(sparqlQuery);
         		Gryphon.query(sparqlQuery, ResultFormat.JSON);
@@ -232,6 +233,7 @@ public class OWLClassExpressionEditorViewComponent extends AbstractOWLViewCompon
         });
 
         queryGryphonButton.setEnabled(false);
+        convertToSparqlButton.setEnabled(false);
         buttonHolder.add(queryGryphonButton);
         buttonHolder.add(convertToSparqlButton);
 //        buttonHolder.add(statusLabel);
