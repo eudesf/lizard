@@ -32,8 +32,11 @@ import org.protege.editor.owl.model.event.OWLModelManagerListener;
 import org.protege.editor.owl.ui.clsdescriptioneditor.ExpressionEditor;
 import org.protege.editor.owl.ui.clsdescriptioneditor.OWLExpressionChecker;
 import org.protege.editor.owl.ui.view.AbstractOWLViewComponent;
+import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
+import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLException;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
 
 import com.hp.hpl.jena.query.Query;
 
@@ -220,7 +223,7 @@ public class OWLClassExpressionEditorViewComponent extends AbstractOWLViewCompon
     private Query convertToSparql() {
     	try {
     		OWLClassExpressionToSPARQLConverter converter = new OWLClassExpressionToSPARQLConverter();
-			return converter.asQuery("?x", owlDescriptionEditor.createObject());
+    		return converter.asQuery("?x", owlDescriptionEditor.createObject());
 		} catch (OWLException e) {
 			throw new RuntimeException(e);
 		}
@@ -246,8 +249,79 @@ public class OWLClassExpressionEditorViewComponent extends AbstractOWLViewCompon
         }
     }
 
+    
     private void doCalculateInfo() {
-    	// TODO
+    	// Organism and includes some MonoMolecularEntity
+    	StringBuilder resultText = new StringBuilder();
+    	resultText.append(getClassesText());
+    	resultText.append("\n\n");
+    	resultText.append(getRelationsText());
+    	resultText.append("\n\n");
+    	resultText.append(getGeneralText());
+    	resultTextArea.setText(resultText.toString());
+    }
+    
+    private Object getRelationsText() {
+    	StringBuilder resultText = new StringBuilder();
+    	resultText.append("Relações:\n");
+    	try {
+			OWLClassExpression classExpr = owlDescriptionEditor.createObject();
+			for (OWLEntity entity : classExpr.getSignature()) {
+				if (entity.isOWLObjectProperty()) {
+					OWLObjectProperty prop = entity.asOWLObjectProperty();
+					resultText.append(" - ");
+					resultText.append(prop.getIRI());
+					resultText.append("\n");
+				}
+			}
+		} catch (OWLException e) {
+			e.printStackTrace();
+		}
+    	return resultText.toString();
+	}
+
+	private String getGeneralText()	 {
+    	StringBuilder resultText = new StringBuilder();
+    	resultText.append("Outras Infos:\n");
+    	try {
+			OWLClassExpression classExpr = owlDescriptionEditor.createObject();
+			resultText.append("Expression Checker: " + owlDescriptionEditor.getExpressionChecker().getClass());
+			resultText.append("\ncreateObject() = ");
+			resultText.append(classExpr);
+			resultText.append("\ngetSignature() = ");
+			resultText.append(classExpr.getSignature().toString());
+			resultText.append("\nSignature list object classes:");
+			for (OWLEntity entity : classExpr.getSignature()) {
+				resultText.append("\n - ");
+				resultText.append(entity.getClass());
+			}
+			
+		} catch (OWLException e) {
+			e.printStackTrace();
+		}
+    	return resultText.toString();
+    	
+    }
+    
+    private String getClassesText() {
+    	StringBuilder resultText = new StringBuilder();
+    	resultText.append("Classes:\n");
+    	try {
+			OWLClassExpression classExpr = owlDescriptionEditor.createObject();
+			for (OWLClass owlClass : classExpr.getClassesInSignature()) {
+				resultText.append(" - ");
+				resultText.append(owlClass.getIRI());
+				resultText.append("\n");
+				for (OWLClassExpression owlSubClass : owlClass.getSubClasses(getOWLModelManager().getActiveOntologies())) {
+					resultText.append("       - ");
+					resultText.append(((OWLClass) owlSubClass).getIRI());
+					resultText.append("\n");
+				}
+			}
+		} catch (OWLException e) {
+			e.printStackTrace();
+		}
+    	return resultText.toString();
 	}
    
 }
