@@ -1,12 +1,5 @@
 package org.coode.dlquery.lizard;
 
-import static org.coode.dlquery.lizard.ResultsSection.DIRECT_SUB_CLASSES;
-import static org.coode.dlquery.lizard.ResultsSection.DIRECT_SUPER_CLASSES;
-import static org.coode.dlquery.lizard.ResultsSection.EQUIVALENT_CLASSES;
-import static org.coode.dlquery.lizard.ResultsSection.INSTANCES;
-import static org.coode.dlquery.lizard.ResultsSection.SUB_CLASSES;
-import static org.coode.dlquery.lizard.ResultsSection.SUPER_CLASSES;
-
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -23,10 +16,7 @@ import java.util.List;
 
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
@@ -36,17 +26,16 @@ import org.aksw.owl2sparql.OWLClassExpressionToSPARQLConverter;
 import org.apache.log4j.Logger;
 import org.protege.editor.core.ui.util.ComponentFactory;
 import org.protege.editor.core.ui.util.InputVerificationStatusChangedListener;
-import org.protege.editor.owl.model.cache.OWLExpressionUserCache;
 import org.protege.editor.owl.model.event.EventType;
 import org.protege.editor.owl.model.event.OWLModelManagerChangeEvent;
 import org.protege.editor.owl.model.event.OWLModelManagerListener;
-import org.protege.editor.owl.model.inference.OWLReasonerManager;
-import org.protege.editor.owl.model.inference.ReasonerUtilities;
 import org.protege.editor.owl.ui.clsdescriptioneditor.ExpressionEditor;
 import org.protege.editor.owl.ui.clsdescriptioneditor.OWLExpressionChecker;
 import org.protege.editor.owl.ui.view.AbstractOWLViewComponent;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLException;
+
+import com.hp.hpl.jena.query.Query;
 
 import br.ufpe.cin.aac3.gryphon.Gryphon;
 import br.ufpe.cin.aac3.gryphon.Gryphon.ResultFormat;
@@ -56,8 +45,6 @@ import cin.ufpe.lizard.LizardPreferencesPane;
 import cin.ufpe.lizard.config.DatabaseConfig;
 import cin.ufpe.lizard.config.OntologyURIConfig;
 import cin.ufpe.lizard.config.SourceConfig;
-
-import com.hp.hpl.jena.query.Query;
 
 /**
  * Author: Matthew Horridge<br>
@@ -75,26 +62,12 @@ public class OWLClassExpressionEditorViewComponent extends AbstractOWLViewCompon
 
     private ExpressionEditor<OWLClassExpression> owlDescriptionEditor;
 
-    private ResultsList resultsList;
-
-    private JCheckBox showDirectSuperClassesCheckBox;
-
-    private JCheckBox showSuperClassesCheckBox;
-
-    private JCheckBox showEquivalentClassesCheckBox;
-
-    private JCheckBox showDirectSubClassesCheckBox;
-
-    private JCheckBox showSubClassesCheckBox;
-
-    private JCheckBox showIndividualsCheckBox;
-
     private JButton queryGryphonButton;
     
     private JButton convertToSparqlButton;
-
-//    private JLabel statusLabel;
     
+    private JButton calculateInfoButton;
+
     private JTextArea resultTextArea;
 
     private OWLModelManagerListener listener;
@@ -108,15 +81,11 @@ public class OWLClassExpressionEditorViewComponent extends AbstractOWLViewCompon
 
         JComponent editorPanel = createQueryPanel();
         JComponent resultsPanel = createTextResultsPanel();
-        // JComponent optionsBox = createOptionsBox();
-        // resultsPanel.add(optionsBox, BorderLayout.EAST);
 
         JSplitPane splitter = new JSplitPane(JSplitPane.VERTICAL_SPLIT, editorPanel, resultsPanel);
         splitter.setDividerLocation(0.3);
 
         add(splitter, BorderLayout.CENTER);
-
-//        updateGUI();
 
         listener = new OWLModelManagerListener() {
             public void handleChange(OWLModelManagerChangeEvent event) {
@@ -200,6 +169,7 @@ public class OWLClassExpressionEditorViewComponent extends AbstractOWLViewCompon
             public void verifiedStatusChanged(boolean newState) {
                 queryGryphonButton.setEnabled(newState);
                 convertToSparqlButton.setEnabled(newState);
+                calculateInfoButton.setEnabled(newState);
             }
         });
         owlDescriptionEditor.setPreferredSize(new Dimension(100, 50));
@@ -219,139 +189,29 @@ public class OWLClassExpressionEditorViewComponent extends AbstractOWLViewCompon
             public void actionPerformed(ActionEvent e) {
             	resultTextArea.setText(convertToSparql().toString());
             }
-
         });
+        calculateInfoButton = new JButton(new AbstractAction("Calculate Info") {
+			private static final long serialVersionUID = -5692150370114704421L;
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				doCalculateInfo();
+			}
+		});
 
         queryGryphonButton.setEnabled(false);
         convertToSparqlButton.setEnabled(false);
+        calculateInfoButton.setEnabled(false);
         buttonHolder.add(queryGryphonButton);
         buttonHolder.add(convertToSparqlButton);
-//        buttonHolder.add(statusLabel);
+        buttonHolder.add(calculateInfoButton);
 
         editorPanel.add(buttonHolder, BorderLayout.SOUTH);
         editorPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(
                 Color.LIGHT_GRAY), "Query (class expression)"), BorderFactory.createEmptyBorder(3, 3, 3, 3)));
         
-//		TODO disabled source alignment...
-    	//
-//    	log.info("Aligning Sources");
-//    	statusLabel = new JLabel("Aligning Sources...");
-//    	new SwingWorker<Void, Object>() {
-//
-//			@Override
-//			protected Void doInBackground() throws Exception {
-//				Gryphon.alignAndMap();
-//				return null;
-//			}
-//
-//			@Override
-//			protected void done() {
-//				statusLabel.setText("Sources aligned.");
-//				executeButton.setEnabled(true);
-//				log.info("Sources aligned.");
-//			}
-//    		
-//    	}.execute();
-    	
         return editorPanel;
     }
-
-
-    private JComponent createResultsPanel() {
-        JComponent resultsPanel = new JPanel(new BorderLayout(10, 10));
-        resultsPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(
-                Color.LIGHT_GRAY), "Query results"), BorderFactory.createEmptyBorder(3, 3, 3, 3)));
-        resultsList = new ResultsList(getOWLEditorKit());
-//        resultsList.setResultsSectionVisible(SUB_CLASSES, showSubClassesCheckBox.isSelected());
-        resultsPanel.add(ComponentFactory.createScrollPane(resultsList));
-        return resultsPanel;
-    }
-
-
-    private JComponent createOptionsBox() {
-        Box optionsBox = new Box(BoxLayout.Y_AXIS);
-        showDirectSuperClassesCheckBox = new JCheckBox(new AbstractAction(DIRECT_SUPER_CLASSES.getDisplayName()) {
-            /**
-             * 
-             */
-            private static final long serialVersionUID = 1531417504526875891L;
-
-            public void actionPerformed(ActionEvent e) {
-                resultsList.setResultsSectionVisible(DIRECT_SUPER_CLASSES, showDirectSuperClassesCheckBox.isSelected());
-                doQuery();
-            }
-        });
-        optionsBox.add(showDirectSuperClassesCheckBox);
-        optionsBox.add(Box.createVerticalStrut(3));
-
-        showSuperClassesCheckBox = new JCheckBox(new AbstractAction(SUPER_CLASSES.getDisplayName()) {
-            /**
-             * 
-             */
-            private static final long serialVersionUID = 4603049796331219219L;
-
-            public void actionPerformed(ActionEvent e) {
-                resultsList.setResultsSectionVisible(SUPER_CLASSES, showSuperClassesCheckBox.isSelected());
-                doQuery();
-            }
-        });
-        showSuperClassesCheckBox.setSelected(false);
-        optionsBox.add(showSuperClassesCheckBox);
-        optionsBox.add(Box.createVerticalStrut(3));
-
-        showEquivalentClassesCheckBox = new JCheckBox(new AbstractAction(EQUIVALENT_CLASSES.getDisplayName()) {
-            /**
-             * 
-             */
-            private static final long serialVersionUID = -3766966095409342054L;
-
-            public void actionPerformed(ActionEvent e) {
-                resultsList.setResultsSectionVisible(EQUIVALENT_CLASSES, showEquivalentClassesCheckBox.isSelected());
-                doQuery();
-            }
-        });
-        optionsBox.add(showEquivalentClassesCheckBox);
-        optionsBox.add(Box.createVerticalStrut(3));
-
-        showDirectSubClassesCheckBox = new JCheckBox(new AbstractAction(DIRECT_SUB_CLASSES.getDisplayName()) {
-            private static final long serialVersionUID = 696913194074753412L;
-
-            public void actionPerformed(ActionEvent e) {
-                resultsList.setResultsSectionVisible(DIRECT_SUB_CLASSES, showDirectSubClassesCheckBox.isSelected());
-                doQuery();
-            }
-        });
-        optionsBox.add(showDirectSubClassesCheckBox);
-        optionsBox.add(Box.createVerticalStrut(3));
-
-        showSubClassesCheckBox = new JCheckBox(new AbstractAction(SUB_CLASSES.getDisplayName()) {
-            private static final long serialVersionUID = -3418802363566640471L;
-
-            public void actionPerformed(ActionEvent e) {
-                resultsList.setResultsSectionVisible(SUB_CLASSES, showSubClassesCheckBox.isSelected());
-                doQuery();
-            }
-        });
-        showSubClassesCheckBox.setSelected(false);
-        optionsBox.add(showSubClassesCheckBox);
-        optionsBox.add(Box.createVerticalStrut(3));
-
-        showIndividualsCheckBox = new JCheckBox(new AbstractAction(INSTANCES.getDisplayName()) {
-            /**
-             * 
-             */
-            private static final long serialVersionUID = -7727032635999833150L;
-
-            public void actionPerformed(ActionEvent e) {
-                resultsList.setResultsSectionVisible(INSTANCES, showIndividualsCheckBox.isSelected());
-                doQuery();
-            }
-        });
-        optionsBox.add(showIndividualsCheckBox);
-
-        return optionsBox;
-    }
-
 
     protected void disposeOWLView() {
         getOWLModelManager().removeListener(listener);
@@ -386,6 +246,8 @@ public class OWLClassExpressionEditorViewComponent extends AbstractOWLViewCompon
         }
     }
 
-
+    private void doCalculateInfo() {
+    	// TODO
+	}
    
 }
